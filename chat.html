@@ -1,0 +1,63 @@
+<!DOCTYPE html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Codex ????</title><style>body{background:#0f1420;color:#e8eaf0;font-family:'Microsoft YaHei',sans-serif;max-width:900px;margin:auto;padding:16px}h1{font-size:20px}h2{font-size:16px;color:#7aa2f7;border-left:3px solid #4a6cf7;padding-left:8px;margin-top:24px}h3{font-size:14px;color:#9aa4bd}table{width:100%;border-collapse:collapse;background:#1a2233;border-radius:10px;font-size:13px;margin:8px 0}th,td{padding:6px 8px;border-bottom:1px solid #26304a;text-align:left}th{background:#232f4d;color:#9aa4bd}p{font-size:14px;line-height:1.7}.quote{color:#9aa4bd;font-size:12px}li{font-size:14px;line-height:1.8}a{color:#7aa2f7}</style></head><body><div id="pwgate" style="position:fixed;inset:0;background:#0f1420;color:#e8eaf0;display:flex;align-items:center;justify-content:center;z-index:9999"><div style="background:#1a2233;padding:30px;border-radius:12px;text-align:center;min-width:280px"><h2>Codex ????</h2><p>???????</p><input id="pwin" type="password" style="padding:8px 12px;border-radius:6px;border:1px solid #2c3a5e;background:#0f1420;color:#e8eaf0;font-size:15px;width:200px" onkeydown="if(event.key==='Enter')checkPw()"/><br/><button onclick="checkPw()" style="margin-top:12px;background:#4a6cf7;color:#fff;border:0;border-radius:6px;padding:8px 22px;cursor:pointer">??</button><p id="pwerr" style="color:#ff5b5b;display:none">????</p></div></div><script>var SITE_PW="123456";function checkPw(){if(document.getElementById('pwin').value===SITE_PW){sessionStorage.setItem('rc_ok','1');document.getElementById('pwgate').style.display='none';}else{document.getElementById('pwerr').style.display='';}}if(sessionStorage.getItem('rc_ok')==='1'){document.getElementById('pwgate').style.display='none';}</script><h1>Codex × 微信 对话纪要（股票系统专项）</h1>
+<p class="quote">会话：019ff424-9958-7631-a532-acbdc780b2b8 ｜ 周期：2026-08-12 ~ 2026-08-15</p>
+<p class="quote">说明：Codex 桌面会话的原始文本存在 Codex 本地、OpenClaw 微信侧只留任务记录，</p>
+<p class="quote">因此这份纪要是由 Codex 依据全程对话整理的可查版本（完整摘要，非逐字）。</p>
+<h2>一、项目：A股每日推荐与胜率统计系统 v4</h2>
+<p>**核心架构（省 token 的关键）**</p>
+<ul>
+<li>脚本抓数据（0 token）→ 文件存数据 → AI 只在 09:26 选股一次（唯一思考环节）</li>
+<li>每天 1-2 万 token 预算，全部花在选股判断上</li>
+</ul>
+<p>**每日自动时间线（周一至五）**</p>
+<table>
+<tr><td>时间</td><td>动作</td></tr>
+<tr><td>---</td><td>---</td></tr>
+<tr><td>09:26</td><td>AI 选股 10-20 只（DeepSeek，唯一 AI 调用），失败 09:31 规则兜底</td></tr>
+<tr><td>09:28</td><td>记录开盘价（统一价格时间）</td></tr>
+<tr><td>09:40-11:30 / 13:00-15:00</td><td>盘中每 10 分钟快照（上下午两段，午休、周末零触发）</td></tr>
+<tr><td>15:05</td><td>收盘终值快照</td></tr>
+<tr><td>15:10</td><td>收盘价 + 纸上/真实胜率 + Excel + 日报 + 归档</td></tr>
+<tr><td>15:12</td><td>发布公网 + 推送微信</td></tr>
+<tr><td>15:35</td><td>健康自检（异常自动告警）</td></tr>
+<tr><td>周日 20:00</td><td>数据滚动清理</td></tr>
+</table>
+<h2>二、用户提出的关键需求与落地</h2>
+<p>1. **全程自动化、零操作** → 双保险：Windows 计划任务 9 个 + OpenClaw 定时任务 8 个，幂等不重复</p>
+<p>2. **手机随时可查** → GitHub Pages 公网（密码 123456），`https://li8476295-bot.github.io/stock-report-center/`</p>
+<p>3. **开盘 09:28 统一记录** → 已实现</p>
+<p>4. **实时行情 + 可买/不可买状态** → 网页 30 秒刷新，状态列自动判定</p>
+<p>5. **板块归因点击看个股、按日期查看、次日涨跌** → 网页下钻全部实现</p>
+<p>6. **胜率低的原因分析** → 按类型/板块/大盘环境归因 + 滚动窗口换血</p>
+<p>7. **周末/午休不空转** → 盘中任务拆上下午两段、仅工作日</p>
+<p>8. **不同设备自适应** → 手机 7 列 / 平板 9 列 / 电脑 14 列（实测通过）</p>
+<p>9. **胜率痛觉机制** → 黄灯 45% / 红灯 35%，页面横幅 + 板块着色，脚本强制收缩</p>
+<h2>三、学幻方量化后的四块升级（8/14）</h2>
+<p>1. **候选池带基本面**：涨幅榜 Top25 + 主力净流入 Top15（量比/换手/行业/PE/市值/主力资金），东财失败自动切新浪</p>
+<p>2. **信心分 1-5**：AI 每只打分，超上限先砍低信心</p>
+<p>3. **组合约束**：板块 ≤40%、弱市追涨+突破 ≤40%、正常环境单类型 ≤80%、成交额 ≥1亿</p>
+<p>4. **过热减半 + 止损纪律**：重点板块近 3 日累计涨幅 ≥8% 自动减半；日报含 纪律率</p>
+<h2>四、回测结论（8/11-8/13）</h2>
+<ul>
+<li>8/11、8/12 原本就合规；8/13 医药 6/14=43% 超上限 → 新规则会砍到 5 只</li>
+<li>顺手修复板块上限&quot;越砍越塌缩&quot;的隐患（12+1 场景不会再缩到 1 只）</li>
+<li>8/14 软件 3日+8.0% 触发过热减半，机制当场生效</li>
+</ul>
+<h2>五、东方财富 502 诊断（8/15）</h2>
+<ul>
+<li>东财 push2 主域名对我们的 IP 持续 502（限流/拦截，非代码故障）</li>
+<li>已加&quot;主域名 502 → 自动切换镜像域名&quot;；候选池新浪兜底实测成功</li>
+<li>主链路腾讯 + 备用新浪均正常，系统零中断</li>
+</ul>
+<h2>六、本次&quot;对话记录&quot;问题（8/15）</h2>
+<ul>
+<li>根因：Codex 对话本体在 Codex 本地，OpenClaw 微信侧只有任务调用记录，无对话明细</li>
+<li>已做：导出工具 export_chat.py + 本纪要 + 公网可查页面</li>
+<li>微信查看方式：发链接或让 OpenClaw 读取本文件</li>
+</ul>
+<h2>七、当前系统状态（8/15 维护后）</h2>
+<ul>
+<li>Windows 9 任务全部就绪，状态码全部 0x0；OpenClaw 8 定时任务正常</li>
+<li>数据完整：周五池 16 只、5 个交易日行情 77 条、历史 45 条</li>
+<li>胜率痛觉计当前：黄灯（窗口真实胜率 44.9% &lt; 45%），周一自动收缩推荐 ≤10 只、禁追涨</li>
+<li>公网报表中心已更新（密码 123456）</li>
+</ul></body></html>
