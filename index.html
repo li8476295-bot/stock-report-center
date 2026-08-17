@@ -7,14 +7,14 @@
 <style>
  body{background:#0f1420;color:#e8eaf0;font-family:'Microsoft YaHei',sans-serif;margin:0;padding:16px;max-width:1100px;margin:auto;position:relative}
  body::before{content:'';position:fixed;inset:0;background:url('static-bg.jpg') no-repeat center/cover;z-index:-2}
- body::after{content:'';position:fixed;inset:0;background:linear-gradient(180deg,rgba(8,12,24,.72),rgba(8,12,24,.55));z-index:-1}
+ body::after{content:'';position:fixed;inset:0;background:linear-gradient(180deg,rgba(20,14,34,.70),rgba(24,18,40,.55));z-index:-1}
  h1{font-size:21px;margin:8px 0;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.5)}
- h2{font-size:15px;color:#c7d4f5;border-left:4px solid #4a6cf7;padding-left:10px;margin:24px 0 10px;background:linear-gradient(90deg,rgba(74,108,247,.18),rgba(74,108,247,0));padding:6px 10px;border-radius:0 8px 8px 0}
+ h2{font-size:15px;color:#ead6f2;border-left:4px solid #c792ea;padding-left:10px;margin:24px 0 10px;background:linear-gradient(90deg,rgba(199,146,234,.22),rgba(199,146,234,0));padding:6px 10px;border-radius:0 8px 8px 0}
  table{width:100%;border-collapse:collapse;background:rgba(26,34,51,.94);font-size:13px}
  .tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:10px;margin-top:6px;box-shadow:0 4px 18px rgba(0,0,0,.25)}
  th,td{padding:6px 8px;text-align:left;border-bottom:1px solid rgba(38,48,74,.9);white-space:nowrap}
- th{background:rgba(35,47,77,.96);color:#9aa4bd;font-size:12px}
- tbody tr:hover{background:rgba(74,108,247,.14)}
+ th{background:rgba(60,59,88,.96);color:#c3b8d6;font-size:12px}
+ tbody tr:hover{background:rgba(216,130,190,.16)}
 .card{background:rgba(26,34,51,.9)}
 .review{background:rgba(26,34,51,.9)}
 .core-card{border:1px solid #f1c40f;background:rgba(31,26,14,.92)}
@@ -23,16 +23,16 @@
 .tag-buy{background:#2ecc71;color:#0f1420}.tag-stop{background:#ff5b5b;color:#fff}
 .tag-wait{background:#e67e22;color:#fff}
 .note{color:#9aa4bd;font-size:12px;margin-top:6px}
-a{color:#7aa2f7;text-decoration:none;cursor:pointer}
+a{color:#d9a5f0;text-decoration:none;cursor:pointer}
 .head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
-.nav{position:sticky;top:0;background:#0f1420;padding:8px 0;border-bottom:1px solid #26304a;margin-bottom:10px;z-index:100;display:flex;gap:16px;flex-wrap:wrap}
+.nav{position:sticky;top:0;background:rgba(20,14,36,.92);padding:8px 0;border-bottom:1px solid #4a4470;margin-bottom:10px;z-index:100;display:flex;gap:16px;flex-wrap:wrap;backdrop-filter:blur(6px)}
 .nav a{color:#9aa4bd;font-size:13px}
 .nav a:hover{color:#fff}
-.detail-insert{background:#1a2233;border:1px solid #2c3a5e;border-radius:10px;padding:12px;margin:10px 0}
+.detail-insert{background:rgba(26,25,44,.94);border:1px solid #5a5480;border-radius:10px;padding:12px;margin:10px 0}
 .detail-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
-.detail-head button{background:#232f4d;color:#e8eaf0;border:0;border-radius:6px;padding:4px 10px;cursor:pointer}
-.chip{display:inline-block;background:#232f4d;color:#9aa4bd;border-radius:14px;padding:4px 12px;margin:3px 6px 3px 0;cursor:pointer;font-size:13px}
-.chip:hover{background:#4a6cf7;color:#fff}
+.detail-head button{background:#4a4670;color:#e8eaf0;border:0;border-radius:6px;padding:4px 10px;cursor:pointer}
+.chip{display:inline-block;background:#3a3658;color:#c3b8d6;border-radius:14px;padding:4px 12px;margin:3px 6px 3px 0;cursor:pointer;font-size:13px}
+.chip:hover{background:#b388d6;color:#fff}
 .review{background:#1a2233;border-radius:10px;padding:12px;margin:8px 0}
 .review h3{font-size:13px;color:#9aa4bd;margin:0 0 6px}
 .review pre{white-space:pre-wrap;word-break:break-all;font-family:'Microsoft YaHei',sans-serif;font-size:13px;margin:0;color:#e8eaf0}
@@ -49,11 +49,11 @@ a{color:#7aa2f7;text-decoration:none;cursor:pointer}
 .rate-org{color:#ff9f43;font-weight:bold}
 .rate-yel{color:#f1c40f}
 .rate-grn{color:#2ecc71;font-weight:bold}
-.card{background:#1a2233;border:1px solid #2c3a5e;border-radius:12px;padding:12px 14px;margin:10px 0}
+.card{background:rgba(26,25,44,.9);border:1px solid #5a5480;border-radius:12px;padding:12px 14px;margin:10px 0}
 .core-card{border:1px solid #f1c40f;background:#1f1a0e}
 .core-card h3{color:#f1c40f;margin:0 0 8px;font-size:14px}
 .core-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
-.core-item{background:#232f4d;border-radius:8px;padding:7px 10px;font-size:12px;min-width:170px}
+.core-item{background:#3a3658;border-radius:8px;padding:7px 10px;font-size:12px;min-width:170px}
 .core-item .nm{font-weight:bold;color:#fff}
 .core-item .st{font-size:11px;color:#c9d2e3;margin-top:3px}
 .idx-card{padding:10px 14px}
@@ -70,7 +70,7 @@ a{color:#7aa2f7;text-decoration:none;cursor:pointer}
 .split-col{flex:1;min-width:180px;background:#161e31;border-radius:8px;padding:8px 10px;font-size:12px}
 .split-col b{display:block;margin-bottom:6px;color:#9aa4bd}
 .split-list{max-height:280px;overflow-y:auto}
-.split-item{padding:2px 0;border-bottom:1px solid #26304a}
+.split-item{padding:2px 0;border-bottom:1px solid #4a4470}
 @media (max-width:1024px){ .c-hide-md{display:none} }
 @media (max-width:640px){
  body{padding:10px}
@@ -87,7 +87,7 @@ a{color:#7aa2f7;text-decoration:none;cursor:pointer}
 <div class="head"><h1>📊 股票报表中心</h1><span class="note" id="clock"></span></div>
 <div class="nav"><a href="#sec0">核心精选</a><a href="#sec1">今日推荐</a><a href="#sec1b">方法对比</a><a href="#sec1d">模拟玩家</a><a href="#sec2">逐日胜率</a><a href="#sec3">历史推送</a><a href="#sec4">类型归因</a><a href="#sec5">板块归因</a><a href="#sec6">复盘</a></div>
 <div class="note">实时行情自动刷新（间隔可在 config.json 的 quote_refresh_seconds 调整）｜ 汇总表每天 15:10 收盘后自动重建 ｜ 手动刷新：python report_center.py</div>
-<div class="note">页面生成时间：2026-08-17 16:47</div>
+<div class="note">页面生成时间：2026-08-17 17:28</div>
 <div class="pain pain-0"><div class="pain-title">🟢 胜率痛觉计：等级 0 · 正常</div><div class="pain-body">近 5 个交易日真实胜率 <b>46.7%</b>（样本 45 只）｜窗口胜率正常</div></div>
 <div class="card idx-card"><div class="idx-title">📈 大盘指数（实时）</div><div id="idx-box" class="idx-row"><span class="note">加载中…</span></div></div>
 <h2 id="sec0">⭐ 今日核心精选（2 只 · 可买点实时更新）</h2>
