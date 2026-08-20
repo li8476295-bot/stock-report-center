@@ -197,7 +197,7 @@
       fetchBalance(key).then(function (d) {
         if (d && d.balance_infos && d.balance_infos.length && document.querySelector('.bw-host')) {
           var tag = document.createElement('div');
-          tag.style.cssText = 'position:fixed;right:14px;bottom:118px;z-index:9999;pointer-events:none;font-size:11px;color:#9fc6dd;background:rgba(10,16,28,.7);padding:3px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.1)';
+          tag.style.cssText = 'position:fixed;right:14px;bottom:' + (window.innerWidth <= 640 ? '96px' : '118px') + ';z-index:9999;pointer-events:none;font-size:11px;color:#9fc6dd;background:rgba(10,16,28,.7);padding:3px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.1)';
           tag.textContent = '余额 ¥' + (parseFloat(d.balance_infos[0].total_balance) || 0).toFixed(2) + '（点鲸鱼查询）';
           document.body.appendChild(tag);
         }
