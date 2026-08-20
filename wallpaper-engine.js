@@ -36,6 +36,8 @@
     let source = opts.source || 'canvas';       // canvas | image | video | auto
     let images = Array.isArray(opts.images) ? opts.images : (opts.url ? [opts.url] : []);
     let videoUrl = opts.video || '';
+    let videos = Array.isArray(opts.videos) ? opts.videos : [];
+    let vidIdx = 0;
     let density = clamp(opts.density || 1, 0.3, 2);
     let speed = clamp(opts.speed || 1, 0.2, 3);
     let dim = clamp(opts.dim || 0.55, 0, 1);
@@ -70,32 +72,68 @@
       });
     }
 
+    // 多视频轮播：播放结束或超时（60s）切下一个
+    function nextVideo() {
+      if (videos.length > 1 && videoEl) {
+        vidIdx = (vidIdx + 1) % videos.length;
+        videoEl.src = videos[vidIdx];
+        videoEl.play().catch(() => {});
+      }
+    }
+
     async function applySource() {
       if (source === 'auto') {
-        // 尝试读壁纸清单（与页面同目录）
-        try {
-          const r = await fetch('./wallpapers/config.json', { cache: 'no-store' });
-          if (r.ok) {
-            const cfg = await r.json();
-            if (cfg.source === 'image' && Array.isArray(cfg.images)) { images = cfg.images; source = 'image'; }
-            else if (cfg.source === 'video' && cfg.video) { videoUrl = cfg.video; source = 'video'; }
+        // 1) 页面内联配置优先（file:// 下 fetch 不可用，报表中心构建时内嵌 __WE_CONFIG__）
+        if (global.__WE_CONFIG__ && typeof global.__WE_CONFIG__ === 'object') {
+          const cfg = global.__WE_CONFIG__;
+          if (cfg.source === 'image' && Array.isArray(cfg.images)) { images = cfg.images; source = 'image'; }
+          else if (cfg.source === 'video') {
+            if (cfg.video) { videoUrl = cfg.video; source = 'video'; }
+            else if (Array.isArray(cfg.videos) && cfg.videos.length) { videos = cfg.videos; source = 'video'; }
             else { source = 'canvas'; }
-            if (cfg.theme) theme = cfg.theme;
-            if (cfg.dim !== undefined) dim = clamp(cfg.dim, 0, 1);
-            if (cfg.density !== undefined) density = clamp(cfg.density, 0.3, 2);
-            if (cfg.speed !== undefined) speed = clamp(cfg.speed, 0.2, 3);
-            if (cfg.accent) accent = cfg.accent;
           }
-        } catch (e) { /* 无清单则用默认 */ }
+          else { source = 'canvas'; }
+          if (cfg.theme) theme = cfg.theme;
+          if (cfg.dim !== undefined) dim = clamp(cfg.dim, 0, 1);
+          if (cfg.density !== undefined) density = clamp(cfg.density, 0.3, 2);
+          if (cfg.speed !== undefined) speed = clamp(cfg.speed, 0.2, 3);
+          if (cfg.accent) accent = cfg.accent;
+        } else {
+          // 2) 无内联配置时尝试读壁纸清单（与页面同目录）
+          try {
+            const r = await fetch('./wallpapers/config.json', { cache: 'no-store' });
+            if (r.ok) {
+              const cfg = await r.json();
+              if (cfg.source === 'image' && Array.isArray(cfg.images)) { images = cfg.images; source = 'image'; }
+              else if (cfg.source === 'video') {
+                if (cfg.video) { videoUrl = cfg.video; source = 'video'; }
+                else if (Array.isArray(cfg.videos) && cfg.videos.length) { videos = cfg.videos; source = 'video'; }
+                else { source = 'canvas'; }
+              }
+              else { source = 'canvas'; }
+              if (cfg.theme) theme = cfg.theme;
+              if (cfg.dim !== undefined) dim = clamp(cfg.dim, 0, 1);
+              if (cfg.density !== undefined) density = clamp(cfg.density, 0.3, 2);
+              if (cfg.speed !== undefined) speed = clamp(cfg.speed, 0.2, 3);
+              if (cfg.accent) accent = cfg.accent;
+            }
+          } catch (e) { /* 无清单则用默认 */ }
+        }
         if (source === 'auto') source = 'canvas';
       }
       imgs.length = 0;
       if (source === 'image' && images.length) {
         for (const u of images) await loadImage(u);
         if (!imgs.length) source = 'canvas';
-      } else if (source === 'video' && videoUrl) {
-        await loadVideo(videoUrl);
-        if (!videoEl) source = 'canvas';
+      } else if (source === 'video') {
+        const list = videos.length ? videos : (videoUrl ? [videoUrl] : []);
+        if (list.length) {
+          videos = list;
+          await loadVideo(list[0]);
+          if (!videoEl) source = 'canvas';
+        } else {
+          source = 'canvas';
+        }
       }
       resize();
     }
@@ -263,6 +301,11 @@
         const vw = videoEl.videoWidth || 16, vh = videoEl.videoHeight || 9;
         const cr = coverRect(vw, vh);
         ctx.drawImage(videoEl, cr.dx, cr.dy, cr.dw, cr.dh);
+        if (!videoEl._weNext && videos.length > 1) {
+          videoEl._weNext = true;
+          videoEl.addEventListener('ended', () => { nextVideo(); });
+          setTimeout(() => { nextVideo(); }, 60000);   // 60s 轮换
+        }
       } else {
         drawTheme();
       }
