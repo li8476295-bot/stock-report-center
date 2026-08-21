@@ -174,12 +174,18 @@
     localStorage.setItem(LS_PREF, JSON.stringify(pref));
   }
 
-  // ── 鲸鱼点击 ──
+  // ── DeepSeek娘 点击（挥手动画 + 余额/Key）──
   function hookWhale() {
-    var wh = document.querySelector('.bw-host');
+    var wh = document.querySelector('.ds-pet');
     if (!wh) return;
     wh.title = '点击查看 DeepSeek 余额';
     wh.onclick = function () {
+      var img = document.getElementById('ds-pet-img');
+      if (img) {
+        img.src = 'images/waving.gif';
+        clearTimeout(window.__DS_PET_T__);
+        window.__DS_PET_T__ = setTimeout(function () { img.src = 'images/idle.gif'; }, 2000);
+      }
       var key = localStorage.getItem(LS_KEY);
       if (key) showBalance(key);
       else editKey();
@@ -191,14 +197,14 @@
     css();
     buildPanel();
     hookWhale();
-    // 已存 key 时鲸鱼旁显示余额小标签
+    // 已存 key 时角色旁显示余额小标签
     var key = localStorage.getItem(LS_KEY);
-    if (key && window.BalanceWhale) {
+    if (key && document.querySelector('.ds-pet')) {
       fetchBalance(key).then(function (d) {
-        if (d && d.balance_infos && d.balance_infos.length && document.querySelector('.bw-host')) {
+        if (d && d.balance_infos && d.balance_infos.length && document.querySelector('.ds-pet')) {
           var tag = document.createElement('div');
-          tag.style.cssText = 'position:fixed;right:14px;bottom:' + (window.innerWidth <= 640 ? '96px' : '118px') + ';z-index:9999;pointer-events:none;font-size:11px;color:#9fc6dd;background:rgba(10,16,28,.7);padding:3px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.1)';
-          tag.textContent = '余额 ¥' + (parseFloat(d.balance_infos[0].total_balance) || 0).toFixed(2) + '（点鲸鱼查询）';
+          tag.style.cssText = 'position:fixed;right:14px;bottom:' + (window.innerWidth <= 640 ? '108px' : '150px') + ';z-index:9999;pointer-events:none;font-size:11px;color:#9fc6dd;background:rgba(10,16,28,.7);padding:3px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.1)';
+          tag.textContent = '余额 ¥' + (parseFloat(d.balance_infos[0].total_balance) || 0).toFixed(2) + '（点DeepSeek娘查询）';
           document.body.appendChild(tag);
         }
       }).catch(function () {});
