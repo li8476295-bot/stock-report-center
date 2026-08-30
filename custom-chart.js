@@ -197,6 +197,104 @@
     drawText(ctx, 'MA20', padL + 280, 16, COL.ma20, 10);
   }
 
+  // ── 当日收盘分时走势图 ──
+  // data: {date, pts:[[HHMM, price], ...]}  ann={buy_low,buy_cap,stop,price,pre_close}
+  function drawMinute(canvas, data, title, ann) {
+    var f = fit(canvas); var ctx = f.ctx, W = f.w, H = f.h;
+    ctx.clearRect(0, 0, W, H);
+    var pts = (data && data.pts) || [];
+    if (!pts.length) { drawText(ctx, '暂无当日分时数据', 12, 24, '#c9d2e3', 13); return; }
+    var padL = 52, padR = 12, padT = 30, padB = 24;
+    var mh = H - padT - padB;
+    var pre = ann && ann.pre_close;   // 昨收（基准）
+    var prices = pts.map(function (p) { return p[1]; });
+    var pmin = Math.min.apply(null, prices), pmax = Math.max.apply(null, prices);
+    if (pre != null) { pmin = Math.min(pmin, pre); pmax = Math.max(pmax, pre); }
+    if (ann && ann.stop != null) pmin = Math.min(pmin, ann.stop);
+    if (ann && ann.buy_low != null) pmin = Math.min(pmin, ann.buy_low);
+    if (ann && ann.buy_cap != null) pmax = Math.max(pmax, ann.buy_cap);
+    var rng = niceRange(pmin, pmax);
+    var xOf = function (i) { return pts.length === 1 ? padL : padL + i / (pts.length - 1) * (W - padL - padR); };
+    var yOf = function (p) { return padT + (rng[1] - p) / (rng[1] - rng[0]) * mh; };
+    // 网格 + 左轴
+    var STEP = Math.max(0.5, (rng[1] - rng[0]) / 5);
+    ctx.strokeStyle = COL.grid; ctx.lineWidth = 1;
+    for (var v = Math.ceil(rng[0] / STEP) * STEP; v <= rng[1]; v += STEP) {
+      var yy = yOf(v); ctx.beginPath(); ctx.moveTo(padL, yy); ctx.lineTo(W - padR, yy); ctx.stroke();
+      drawText(ctx, v.toFixed(2), padL - 6, yy + 4, COL.text, 10, 'right');
+    }
+    // 昨收基准线（白虚线）
+    if (pre != null) {
+      var yPre = yOf(pre);
+      ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(padL, yPre); ctx.lineTo(W - padR, yPre); ctx.stroke();
+      ctx.setLineDash([]);
+      drawText(ctx, '昨收 ' + pre, W - padR - 90, yPre - 5, 'rgba(255,255,255,.5)', 9, 'right');
+    }
+    // 买入区间带
+    if (ann && ann.buy_cap != null && ann.buy_low != null) {
+      var cy1 = yOf(Math.max(ann.buy_cap, ann.buy_low)), cy2 = yOf(Math.min(ann.buy_cap, ann.buy_low));
+      ctx.fillStyle = 'rgba(46,204,113,.12)'; ctx.fillRect(padL, cy2, W - padL - padR, Math.max(2, cy1 - cy2));
+      ctx.strokeStyle = 'rgba(46,204,113,.5)'; ctx.lineWidth = 1; ctx.setLineDash([5, 4]);
+      ctx.beginPath(); ctx.moveTo(padL, cy1); ctx.lineTo(W - padR, cy1); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(padL, cy2); ctx.lineTo(W - padR, cy2); ctx.stroke();
+      ctx.setLineDash([]);
+      drawText(ctx, '买入区间 ' + ann.buy_low + '~' + ann.buy_cap, W - padR - 150, cy2 + 12, '#2ecc71', 9, 'right');
+    }
+    // 止损线
+    if (ann && ann.stop != null) {
+      var sy = yOf(ann.stop);
+      ctx.strokeStyle = '#ff5b5b'; ctx.lineWidth = 1; ctx.setLineDash([6, 4]);
+      ctx.beginPath(); ctx.moveTo(padL, sy); ctx.lineTo(W - padR, sy); ctx.stroke();
+      ctx.setLineDash([]);
+      drawText(ctx, '止损 ' + ann.stop, W - padR - 80, sy + 12, '#ff5b5b', 9, 'right');
+    }
+    // 价格线 + 面积
+    ctx.beginPath();
+    for (var k = 0; k < pts.length; k++) {
+      var px = xOf(k), py = yOf(pts[k][1]);
+      if (k === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.strokeStyle = '#49b6ff'; ctx.lineWidth = 2; ctx.stroke();
+    // 面积填充
+    ctx.lineTo(xOf(pts.length - 1), padT + mh); ctx.lineTo(xOf(0), padT + mh); ctx.closePath();
+    ctx.fillStyle = 'rgba(73,182,255,.12)'; ctx.fill();
+    // 破位标记：当日任何分钟价跌破止损 → 标红点 + 文字
+    var bIdx = -1;
+    if (ann && ann.stop != null) {
+      for (var b = 0; b < pts.length; b++) {
+        if (pts[b][1] < ann.stop) { bIdx = b; break; }
+      }
+      if (bIdx >= 0) {
+        var bx = xOf(bIdx), by = yOf(pts[bIdx][1]);
+        ctx.fillStyle = '#ff5b5b'; ctx.beginPath(); ctx.arc(bx, by, 4, 0, 6.283); ctx.fill();
+        drawText(ctx, '▼破位 ' + pts[bIdx][0], bx + 6, by + 14, '#ff5b5b', 11);
+        // 破位后到收盘区间淡红
+        var byEnd = yOf(pts[pts.length - 1][1]);
+        ctx.fillStyle = 'rgba(255,91,91,.10)';
+        var xEnd = xOf(pts.length - 1);
+        ctx.fillRect(bx, Math.min(by, byEnd), xEnd - bx, Math.abs(byEnd - by));
+      }
+    }
+    // 时间刻度（09:30/11:30/13:00/15:00）
+    var marks = ['0930', '1030', '1130', '1300', '1400', '1500'];
+    marks.forEach(function (t) {
+      for (var m = 0; m < pts.length; m++) { if (pts[m][0].slice(0, 4) === t) { var mx = xOf(m); ctx.strokeStyle = COL.grid; ctx.beginPath(); ctx.moveTo(mx, padT); ctx.lineTo(mx, padT + mh); ctx.stroke(); drawText(ctx, t.slice(0, 2) + ':' + t.slice(2), mx - 12, H - 8, COL.text, 9); break; } }
+    });
+    // 状态徽标
+    var stText = '', stColor = '#9aa4bd';
+    if (ann && ann.price != null && ann.stop != null) {
+      if (ann.price < ann.stop) { stText = '🔴 已破止损·观望'; stColor = '#ff5b5b'; }
+      else if (ann.buy_cap != null && ann.buy_low != null && ann.price >= ann.buy_low && ann.price <= ann.buy_cap) { stText = '🟢 在买入区间·可买'; stColor = '#2ecc71'; }
+      else if (ann.buy_cap != null && ann.price < ann.buy_cap) { stText = '🟢 低于买入区间·可分批'; stColor = '#2ecc71'; }
+      else { stText = '🟠 高于买入区间·观望'; stColor = '#f1c40f'; }
+    }
+    if (stText) { ctx.fillStyle = 'rgba(0,0,0,.35)'; var stw = ctx.measureText(stText).width; ctx.fillRect(padL, padT + 18, stw + 26, 18); ctx.fillStyle = stColor; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'left'; ctx.fillText(stText, padL + 13, padT + 31); }
+    // 标题 + 最新价
+    drawText(ctx, title || '当日走势', padL, 16, COL.title, 12);
+    if (ann && ann.price != null) drawText(ctx, '现价 ' + ann.price, padL + 200, 16, '#ffffff', 11);
+  }
+
   // ── 净值双折线 ──
   function drawNav(canvas, sim, exp, title) {
     var f = fit(canvas); var ctx = f.ctx, W = f.w, H = f.h;
@@ -264,5 +362,5 @@
     var f = fit(canvas); f.ctx.clearRect(0, 0, f.w, f.h);
   }
 
-  global.CCK = { drawKline: drawKline, drawNav: drawNav, clear: clear };
+  global.CCK = { drawKline: drawKline, drawMinute: drawMinute, drawNav: drawNav, clear: clear };
 })(window);
