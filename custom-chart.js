@@ -57,13 +57,24 @@
       ctx.beginPath(); ctx.moveTo(padL, yy); ctx.lineTo(W - padR, yy); ctx.stroke();
       drawText(ctx, v.toFixed(2), padL - 6, yy + 4, COL.text, 10, 'right');
     }
-    // x 日期（每 6-8 根）
+    // x 日期（均匀抽标签 + 强制最新一根，避免"最后标签停在旧日期"的误导）
     var every = Math.max(1, Math.ceil(n / 8));
     for (var i = 0; i < n; i += every) {
       var xx = xOf(i);
       ctx.beginPath(); ctx.moveTo(xx, padT); ctx.lineTo(xx, padT + mainH); ctx.stroke();
+      // 若是最后一根之前的普通标签，用常规色；最后一根单独高亮
       drawText(ctx, (bars[i][0] || '').slice(5), xx - 14, H - 8, COL.text, 9);
     }
+    // 最新一根：高亮 + 显式"最新"标注
+    var lbi = n - 1;
+    var lx = xOf(lbi);
+    var ldate = (bars[lbi][0] || '').slice(5);
+    ctx.strokeStyle = 'rgba(241,196,15,.7)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(lx, padT); ctx.lineTo(lx, padT + mainH); ctx.stroke();
+    drawText(ctx, ldate + ' ▲最新', lx - 24, H - 8, '#f1c40f', 10);
+    // 最新一根蜡烛描边高亮
+    ctx.strokeStyle = '#f1c40f'; ctx.lineWidth = 2;
+    ctx.strokeRect(xOf(lbi) - cw / 2 - 1, yOf(Math.max(+bars[lbi][1], +bars[lbi][2])) - 2, cw + 2, Math.max(2, yOf(Math.min(+bars[lbi][1], +bars[lbi][2])) - yOf(Math.max(+bars[lbi][1], +bars[lbi][2])) + 4));
     // 蜡烛
     var vMax = 1;
     for (var i2 = 0; i2 < n; i2++) { if (bars[i2][5] > vMax) vMax = bars[i2][5]; }
@@ -105,6 +116,25 @@
       ctx.stroke();
     }
     drawMA(maVals(5), COL.ma5); drawMA(maVals(10), COL.ma10); drawMA(maVals(20), COL.ma20);
+    // ── 历史破位点：凡当天最低价跌破止损的日子，标红色"破"字 + 竖线 ──
+    if (ann && ann.stop != null) {
+      for (var kb = 0; kb < n; kb++) {
+        var lob = +bars[kb][4];
+        if (lob < ann.stop) {
+          var xb = xOf(kb), yb = yOf(lob);
+          ctx.fillStyle = 'rgba(255,91,91,.9)';
+          ctx.beginPath(); ctx.arc(xb, yb, 3, 0, 6.283); ctx.fill();
+          ctx.strokeStyle = 'rgba(255,91,91,.85)'; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(xb, padT); ctx.lineTo(xb, padT + mainH); ctx.stroke();
+          // 只在主图区右侧/最近处标一个"破"字避免拥挤：给最早那天标
+          if (kb === firstBreakIdx()) drawText(ctx, '破止损', xb + 4, yb - 7, '#ff5b5b', 9);
+        }
+      }
+    }
+    function firstBreakIdx() {
+      for (var q = 0; q < n; q++) { if (+bars[q][4] < (ann && ann.stop)) return q; }
+      return -1;
+    }
     // ── 买入区间 / 止损 / 现价 标记（ann = {buy_low,buy_cap,stop,price}）──
     if (ann) {
       // 买入区间（buy_low ~ buy_cap）浅绿矩形带
@@ -134,18 +164,37 @@
         ctx.setLineDash([]);
         drawText(ctx, '现价 ' + ann.price, padL + 70, py2 - 6, '#ffffff', 9);
       }
+      // 状态徽标：现价 vs 止损 / 买入区间（帮助"能不能买"判断）
+      var stText = '', stColor = '#9aa4bd';
+      if (ann.price != null && ann.stop != null) {
+        if (ann.price < ann.stop) { stText = '🔴 已破止损·观望'; stColor = '#ff5b5b'; }
+        else if (ann.buy_cap != null && ann.buy_low != null && ann.price >= ann.buy_low && ann.price <= ann.buy_cap) {
+          stText = '🟢 在买入区间·可买'; stColor = '#2ecc71';
+        } else if (ann.buy_cap != null && ann.price < ann.buy_cap) {
+          stText = '🟢 低于买入区间·可分批'; stColor = '#2ecc71';
+        } else {
+          stText = '🟠 高于买入区间·观望'; stColor = '#f1c40f';
+        }
+      }
+      if (stText) {
+        ctx.fillStyle = 'rgba(0,0,0,.35)';
+        var stw = ctx.measureText(stText).width;
+        ctx.fillRect(padL, padT + 18, stw + 26, 18);
+        ctx.fillStyle = stColor; ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'left'; ctx.fillText(stText, padL + 13, padT + 31);
+      }
       // 破止损标记（现价 < 止损 → 红色文字+图标）
       if (ann.stop != null && ann.price != null && ann.price < ann.stop) {
         ctx.fillStyle = '#ff5b5b';
-        ctx.beginPath(); ctx.arc(padL + 12, padT + 12, 8, 0, 6.283); ctx.fill();
-        drawText(ctx, '破止损! 现价' + ann.price, padL + 26, padT + 16, '#ff5b5b', 12);
+        ctx.beginPath(); ctx.arc(padL + 12, padT + 52, 8, 0, 6.283); ctx.fill();
+        drawText(ctx, '破止损! 现价' + ann.price, padL + 26, padT + 56, '#ff5b5b', 12);
       }
     }
-    // 标题 + 图例
+    // 标题 + 图例（右上，避开左上状态徽标）
     drawText(ctx, title || '日K', padL, 16, COL.title, 12);
-    drawText(ctx, 'MA5', padL + 130, 16, COL.ma5, 10);
-    drawText(ctx, 'MA10', padL + 168, 16, COL.ma10, 10);
-    drawText(ctx, 'MA20', padL + 210, 16, COL.ma20, 10);
+    drawText(ctx, 'MA5', padL + 200, 16, COL.ma5, 10);
+    drawText(ctx, 'MA10', padL + 238, 16, COL.ma10, 10);
+    drawText(ctx, 'MA20', padL + 280, 16, COL.ma20, 10);
   }
 
   // ── 净值双折线 ──
