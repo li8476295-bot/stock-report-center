@@ -154,22 +154,33 @@
     ctx.clearRect(0, 0, W, H);
     var padL = 56, padR = 14, padT = 34, padB = 24;
     var mw = W - padL - padR, mh = H - padT - padB;
-    var all = {}; (sim || []).forEach(function (x) { all[x[0]] = x[1]; });
-    (exp || []).forEach(function (x) { all[x[0]] = x[1]; });
-    var dates = Object.keys(all).sort();
+    var simMap = {}, expMap = {};
+    (sim || []).forEach(function (x) { simMap[x[0]] = x[1]; });
+    (exp || []).forEach(function (x) { expMap[x[0]] = x[1]; });
+    var dates = Object.keys(simMap).concat(Object.keys(expMap).filter(function (d) { return !(d in simMap); })).sort();
     if (!dates.length) { drawText(ctx, '暂无净值数据', 12, 24, '#c9d2e3', 13); return; }
-    var vals = dates.map(function (d) { return all[d]; });
-    var min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
-    var rng = niceRange(min, max);
+    // 双 y 轴：模拟盘（5000级）左轴 / 策略期望（100级）右轴，避免量级差 50 倍挤在图端
+    function rangeOf(map) {
+      var vs = dates.map(function (d) { return map[d]; }).filter(function (v) { return v != null; });
+      if (!vs.length) return [0, 1];
+      return niceRange(Math.min.apply(null, vs), Math.max.apply(null, vs));
+    }
+    var srng = rangeOf(simMap), erng = rangeOf(expMap);
     var xOf = function (i) { return dates.length === 1 ? padL : padL + i / (dates.length - 1) * mw; };
-    var yOf = function (v) { return padT + (rng[1] - v) / (rng[1] - rng[0]) * mh; };
-    // 网格
+    var yOfS = function (v) { return padT + (srng[1] - v) / (srng[1] - srng[0]) * mh; };
+    var yOfE = function (v) { return padT + (erng[1] - v) / (erng[1] - erng[0]) * mh; };
+    // 左轴网格（模拟盘）
     ctx.strokeStyle = COL.grid; ctx.lineWidth = 1;
-    var STEP = Math.max(0.5, (rng[1] - rng[0]) / 5);
-    for (var v = rng[0]; v <= rng[1]; v += STEP) {
-      var yy = yOf(v);
+    var STEP = (srng[1] - srng[0]) / 5;
+    for (var v = srng[0]; v <= srng[1] + 0.001; v += STEP) {
+      var yy = yOfS(v);
       ctx.beginPath(); ctx.moveTo(padL, yy); ctx.lineTo(W - padR, yy); ctx.stroke();
-      drawText(ctx, v.toFixed(1), padL - 6, yy + 4, COL.text, 10, 'right');
+      drawText(ctx, v.toFixed(0), padL - 6, yy + 4, COL.text, 10, 'right');
+    }
+    // 右轴刻度（策略，紫色）
+    var ESTEP = (erng[1] - erng[0]) / 4;
+    for (var ev = erng[0]; ev <= erng[1] + 0.001; ev += ESTEP) {
+      drawText(ctx, ev.toFixed(1), W - padR + 2, yOfE(ev) + 4, '#c792ea', 9, 'left');
     }
     // x 日期
     var every = Math.max(1, Math.ceil(dates.length / 6));
@@ -178,22 +189,22 @@
       ctx.beginPath(); ctx.moveTo(xx, padT); ctx.lineTo(xx, padT + mh); ctx.stroke();
       drawText(ctx, dates[i].slice(5), xx - 14, H - 8, COL.text, 9);
     }
-    function line(series, color, dash) {
+    function line(series, color, dash, yf) {
       ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.setLineDash(dash || []);
       ctx.beginPath(); var st = false;
       series.forEach(function (x) {
         var idx = dates.indexOf(x[0]); if (idx < 0) return;
-        var px = xOf(idx), py = yOf(x[1]);
+        var px = xOf(idx), py = yf(x[1]);
         if (!st) { ctx.moveTo(px, py); st = true; } else { ctx.lineTo(px, py); }
         ctx.fillStyle = color; ctx.beginPath(); ctx.arc(px, py, 2.5, 0, 6.283); ctx.fill();
       });
       ctx.stroke(); ctx.setLineDash([]);
     }
-    if (sim && sim.length) line(sim, COL.up, []);
-    if (exp && exp.length) line(exp, '#c792ea', [6, 4]);
+    if (sim && sim.length) line(sim, COL.up, [], yOfS);
+    if (exp && exp.length) line(exp, '#c792ea', [6, 4], yOfE);
     drawText(ctx, title || '资金净值（基准100）', padL, 16, COL.title, 12);
-    drawText(ctx, '■ 模拟盘', padL + 200, 16, COL.up, 10);
-    drawText(ctx, '◇ 策略期望', padL + 260, 16, '#c792ea', 10);
+    drawText(ctx, '■ 模拟盘(左轴)', padL + 205, 16, COL.up, 10);
+    drawText(ctx, '◇ 策略期望(右轴)', padL + 300, 16, '#c792ea', 10);
   }
 
   function clear(canvas) {
