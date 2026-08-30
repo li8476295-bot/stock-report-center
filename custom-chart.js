@@ -32,7 +32,7 @@
   }
 
   // ── 日K蜡烛图 ──
-  function drawKline(canvas, bars, title) {
+  function drawKline(canvas, bars, title, ann) {
     var f = fit(canvas); var ctx = f.ctx, W = f.w, H = f.h;
     ctx.clearRect(0, 0, W, H);
     if (!bars || !bars.length) { drawText(ctx, '暂无K线数据', 12, 24, '#c9d2e3', 13); return; }
@@ -105,6 +105,42 @@
       ctx.stroke();
     }
     drawMA(maVals(5), COL.ma5); drawMA(maVals(10), COL.ma10); drawMA(maVals(20), COL.ma20);
+    // ── 买入区间 / 止损 / 现价 标记（ann = {buy_low,buy_cap,stop,price}）──
+    if (ann) {
+      // 买入区间（buy_low ~ buy_cap）浅绿矩形带
+      if (ann.buy_cap != null && ann.buy_low != null) {
+        var cy1 = yOf(Math.max(ann.buy_cap, ann.buy_low)), cy2 = yOf(Math.min(ann.buy_cap, ann.buy_low));
+        ctx.fillStyle = 'rgba(46,204,113,.12)';
+        ctx.fillRect(padL, cy2, W - padL - padR, Math.max(2, cy1 - cy2));
+        ctx.strokeStyle = 'rgba(46,204,113,.5)'; ctx.lineWidth = 1; ctx.setLineDash([5, 4]);
+        ctx.beginPath(); ctx.moveTo(padL, cy1); ctx.lineTo(W - padR, cy1); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(padL, cy2); ctx.lineTo(W - padR, cy2); ctx.stroke();
+        ctx.setLineDash([]);
+        drawText(ctx, '买入区间 ' + ann.buy_low + '~' + ann.buy_cap, W - padR - 150, cy2 + 12, '#2ecc71', 9, 'right');
+      }
+      // 止损线（红色虚线）
+      if (ann.stop != null) {
+        var sy = yOf(ann.stop);
+        ctx.strokeStyle = '#ff5b5b'; ctx.lineWidth = 1; ctx.setLineDash([6, 4]);
+        ctx.beginPath(); ctx.moveTo(padL, sy); ctx.lineTo(W - padR, sy); ctx.stroke();
+        ctx.setLineDash([]);
+        drawText(ctx, '止损 ' + ann.stop, W - padR - 80, sy + 12, '#ff5b5b', 9, 'right');
+      }
+      // 现价（白色点线）
+      if (ann.price != null) {
+        var py2 = yOf(ann.price);
+        ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 1; ctx.setLineDash([3, 4]);
+        ctx.beginPath(); ctx.moveTo(padL, py2); ctx.lineTo(W - padR, py2); ctx.stroke();
+        ctx.setLineDash([]);
+        drawText(ctx, '现价 ' + ann.price, padL + 70, py2 - 6, '#ffffff', 9);
+      }
+      // 破止损标记（现价 < 止损 → 红色文字+图标）
+      if (ann.stop != null && ann.price != null && ann.price < ann.stop) {
+        ctx.fillStyle = '#ff5b5b';
+        ctx.beginPath(); ctx.arc(padL + 12, padT + 12, 8, 0, 6.283); ctx.fill();
+        drawText(ctx, '破止损! 现价' + ann.price, padL + 26, padT + 16, '#ff5b5b', 12);
+      }
+    }
     // 标题 + 图例
     drawText(ctx, title || '日K', padL, 16, COL.title, 12);
     drawText(ctx, 'MA5', padL + 130, 16, COL.ma5, 10);
@@ -146,7 +182,8 @@
       ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.setLineDash(dash || []);
       ctx.beginPath(); var st = false;
       series.forEach(function (x) {
-        var px = xOf(x[0]), py = yOf(x[1]);
+        var idx = dates.indexOf(x[0]); if (idx < 0) return;
+        var px = xOf(idx), py = yOf(x[1]);
         if (!st) { ctx.moveTo(px, py); st = true; } else { ctx.lineTo(px, py); }
         ctx.fillStyle = color; ctx.beginPath(); ctx.arc(px, py, 2.5, 0, 6.283); ctx.fill();
       });
