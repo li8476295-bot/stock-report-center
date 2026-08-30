@@ -147,6 +147,12 @@
         ctx.beginPath(); ctx.moveTo(padL, cy2); ctx.lineTo(W - padR, cy2); ctx.stroke();
         ctx.setLineDash([]);
         drawText(ctx, '买入区间 ' + ann.buy_low + '~' + ann.buy_cap, W - padR - 150, cy2 + 12, '#2ecc71', 9, 'right');
+        // 明确买入点：在买入区间上沿（推荐买入价）标绿色▲
+        var bpx = padL + (W - padL - padR) * 0.18;
+        ctx.fillStyle = '#2ecc71'; ctx.beginPath();
+        ctx.moveTo(bpx, cy1 - 7); ctx.lineTo(bpx - 6, cy1 + 3); ctx.lineTo(bpx + 6, cy1 + 3); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#2ecc71'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'left';
+        ctx.fillText('▲买入点 ' + ann.buy_cap, bpx + 9, cy1 + 8);
       }
       // 止损线（红色虚线）
       if (ann.stop != null) {
@@ -240,6 +246,11 @@
       ctx.beginPath(); ctx.moveTo(padL, cy2); ctx.lineTo(W - padR, cy2); ctx.stroke();
       ctx.setLineDash([]);
       drawText(ctx, '买入区间 ' + ann.buy_low + '~' + ann.buy_cap, W - padR - 150, cy2 + 12, '#2ecc71', 9, 'right');
+      var bpx2 = padL + (W - padL - padR) * 0.18;
+      ctx.fillStyle = '#2ecc71'; ctx.beginPath();
+      ctx.moveTo(bpx2, cy1 - 7); ctx.lineTo(bpx2 - 6, cy1 + 3); ctx.lineTo(bpx2 + 6, cy1 + 3); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#2ecc71'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'left';
+      ctx.fillText('▲买入点 ' + ann.buy_cap, bpx2 + 9, cy1 + 8);
     }
     // 止损线
     if (ann && ann.stop != null) {
